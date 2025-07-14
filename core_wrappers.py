@@ -157,7 +157,7 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     missing_permissions = xorhybrid.validate_permissions()
     if len(missing_permissions) > 0:
         logger.error(  # pylint: disable=W1203
-            f"Missing required IAM permission. ERROR-INFO - {missing_permissions}"
+            f"Missing required IAM permission. ERROR-INFO - " f"{missing_permissions}"
         )  # noqa pylint: disable=C0301,W1203
         logger.info(
             "Ensure user/service account has roles/apigee.readOnlyAdmin role and apigee.proxies.create permission"
@@ -166,7 +166,8 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     org_obj = xorhybrid.get_org()
     if org_obj.get("error"):
         logger.error(  # pylint: disable=W1203
-            f"No target organizations found. ERROR-INFO - {org_obj['error'].get('message','No error Info found.')}"
+            f"No target organizations found. ERROR-INFO - "
+            f"{org_obj['error'].get('message', 'No error Info found.')}"
         )  # noqa pylint: disable=C0301,W1203
         return False
     return True
