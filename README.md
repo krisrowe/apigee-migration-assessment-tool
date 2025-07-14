@@ -133,6 +133,7 @@ The tool requires specific permissions to access and analyze your Apigee environ
         ```bash
         export APIGEE_ACCESS_TOKEN=$(gcloud auth print-access-token)
         ```
+        > **Note:** This token is not required if you use the `--skip-target-validation` flag.
 
 ## Running the Tool
 
