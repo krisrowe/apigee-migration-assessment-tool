@@ -18,6 +18,14 @@ The following migration paths are supported:
 | Apigee Hybrid          | Apigee X               |
 | Apigee X               | Apigee Hybrid          |
 
+## About `--skip-target-validation`
+
+The `--skip-target-validation` flag allows you to run the assessment tool without connecting to or validating against a target Apigee X/Hybrid Organization. This is useful for early discovery or when you do not have credentials for the target.
+
+> **Important:**
+> This flag is **only supported when your source is Apigee Edge (SaaS or OPDK)**.
+> If your source is Apigee X/Hybrid, using this flag will cause the tool to exit with an error.
+
 ## Prerequisites
 
 You can run this tool locally using Python or via a Docker container.
@@ -92,14 +100,17 @@ The tool requires specific permissions to access and analyze your Apigee environ
     | `input` | `SOURCE_ORG`            | Name of your source Apigee organization.                                   |
     | `input` | `SOURCE_AUTH_TYPE`      | Authentication type for the source: `basic` or `oauth`.                     |
     | `input` | `SOURCE_APIGEE_VERSION` | Flavor of your source Apigee: `OPDK`, `SAAS`, `X`, or `HYBRID`.             |
-    | `input` | `TARGET_URL`            | Management URL of your target Apigee X/Hybrid environment (Global or DRZ URL).|
-    | `input` | `GCP_PROJECT_ID`        | GCP Project ID where your target Apigee X/Hybrid instance is running.       |
+    | `input` | `TARGET_URL`            | Management URL of your target Apigee X/Hybrid environment (Global or DRZ URL).<br>**Not required if using `--skip-target-validation`.** |
+    | `input` | `GCP_PROJECT_ID`        | GCP Project ID where your target Apigee X/Hybrid instance is running.<br>**Not required if using `--skip-target-validation`.** |
     | `input` | `TARGET_DIR`            | Name of the directory where exported Apigee objects and reports will be saved (e.g., `output`). |
     | `input` | `TARGET_COMPARE`        | Set to `true` to export apigee objects from target environment and compare with source. Set to `false` to avoid export and compare. |
     | `input` | `SSL_VERIFICATION`      | Set to `false` to ignore SSL certificate verification, or `true` to enforce it. |
 
 2.  **Authentication Tokens:**
     Export the necessary authentication tokens as environment variables before running the tool.
+
+    > **Note:**
+    > If you use the `--skip-target-validation` flag, you do **not** need to provide the `APIGEE_ACCESS_TOKEN` environment variable, and you can omit `TARGET_URL` and `GCP_PROJECT_ID` from your `input.properties`.
 
     *   **For Source: Apigee Edge (SaaS/OPDK) or Apigee X/Hybrid:**
         *   **Basic Auth (Edge):**
@@ -135,6 +146,12 @@ The primary script for running the assessment is `main.py`.
     *   **Available Environment-Level Resources:** `targetservers`, `keyvaluemaps`, `references`, `resourcefiles`, `keystores`, `flowhooks`
     *   **Available Organization-Level Resources:** `org_keyvaluemaps`, `developers`, `apiproducts`, `apis`, `apps`, `sharedflows`
 
+*   `--skip-target-validation`:
+    (Optional, **only for Apigee Edge (SaaS/OPDK) sources**)
+    Skips validation of API Proxies and SharedFlows against the target Apigee X/Hybrid Organization.
+    - **Do not use this flag if your source is Apigee X/Hybrid. The tool will exit with an error.**
+    - When this flag is set, you do not need to provide `TARGET_URL` or `GCP_PROJECT_ID` in your `input.properties`, nor the `APIGEE_ACCESS_TOKEN` environment variable.
+
     **Examples:**
     ```bash
     # Assess all resources
@@ -145,6 +162,9 @@ The primary script for running the assessment is `main.py`.
 
     # Assess Keystores and Apps
     python3 main.py --resources keystores,apps
+
+    # Assess all resources without validating against a target environment
+    python3 main.py --resources all --skip-target-validation
     ```
 
 ### Running Locally
@@ -181,6 +201,15 @@ python3 main.py --resources <your_selected_resources>
     *(Adjust `--resources` as needed.)*
 
     > Note: `-e IGNORE_VIZ="true"` can be leveraged to skip generation of graph visualization for the migration artifacts.
+
+    To run without target validation (and without the `APIGEE_ACCESS_TOKEN`):
+    ```bash
+    docker run --rm \
+        -v "$(pwd)/output:/app/target" \
+        -v "$(pwd)/input.properties:/app/input.properties" \
+        -e SOURCE_AUTH_TOKEN="$SOURCE_AUTH_TOKEN" \
+        "$DOCKER_IMAGE" --resources all --skip-target-validation
+    ```
 
 ## Accessing the Report and Visualization
 
