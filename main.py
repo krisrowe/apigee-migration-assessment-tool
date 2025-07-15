@@ -26,18 +26,19 @@ This module orchestrates the assessment process:
 7. Generates a qualification report.
 """
 
-import os
 import argparse
-from core_wrappers import (
-    pre_validation_checks, export_artifacts,
-    validate_artifacts, visualize_artifacts, get_topology,
-    qualification_report)
-from utils import (
-    write_json,
-    parse_json,
-    parse_config
-)
+import os
+
 from base_logger import logger
+from core_wrappers import (
+    export_artifacts,
+    get_topology,
+    pre_validation_checks,
+    qualification_report,
+    validate_artifacts,
+    visualize_artifacts,
+)
+from utils import parse_config, parse_json, write_json
 
 
 def main():
@@ -51,15 +52,17 @@ def main():
     """
     # Parse Input
     parser = argparse.ArgumentParser(
-        description='details',
+        description="details",
         usage='use "%(prog)s --help" for more information',
-        formatter_class=argparse.RawTextHelpFormatter)
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
 
-    parser.add_argument('--resources',
-                        type=str,
-                        dest='resources',
-                        # help='Resources to be exported',
-                        help="""
+    parser.add_argument(
+        "--resources",
+        type=str,
+        dest="resources",
+        # help='Resources to be exported',
+        help="""
         resources can be one of or comma seperated list of
 
         * targetservers
@@ -83,48 +86,72 @@ def main():
 
         Example1: --resources targetservers,keyvaluemaps
         Example2: --resources keystores,apps
-                        """)
+                        """,
+    )
+    parser.add_argument(
+        "--skip-target-validation",
+        action="store_true",
+        default=False,
+        dest="skip_target_validation",
+        help=(
+            "Skip validation of APIs and SharedFlows " "against the target environment."
+        ),
+    )
 
     args = parser.parse_args()
-    resources_list = args.resources.split(',') if args.resources else []
+    resources_list = (
+        [r.strip() for r in args.resources.split(",")] if args.resources else []
+    )
 
     # Pre validation checks
-    cfg = parse_config('input.properties')
-    backend_cfg = parse_config('backend.properties')
-    if not pre_validation_checks(cfg):
+    cfg = parse_config("input.properties")
+    backend_cfg = parse_config("backend.properties")
+
+    source_apigee_version = cfg.get("inputs", "SOURCE_APIGEE_VERSION").upper()
+    if args.skip_target_validation and source_apigee_version in ["X", "HYBRID"]:
+        logger.error(
+            "--skip-target-validation is not applicable when source is Apigee X/Hybrid."
+        )
+        return
+
+    if not pre_validation_checks(cfg, args.skip_target_validation):
         logger.error("Pre validation checks failed. Please, check...")
         return
 
     topology_mapping = {}
-    target_dir = cfg.get('inputs', 'TARGET_DIR')
-    export_dir = backend_cfg.get('export', 'EXPORT_DIR')
-    export_file = backend_cfg.get('export', 'EXPORT_FILE')
+    target_dir = cfg.get("inputs", "TARGET_DIR")
+    export_dir = backend_cfg.get("export", "EXPORT_DIR")
+    export_file = backend_cfg.get("export", "EXPORT_FILE")
     export_data_file = f"{target_dir}/{export_dir}/{export_file}"
     export_data = parse_json(export_data_file)
 
     report_data_file = f"{target_dir}/{export_dir}/report.json"
     report = parse_json(report_data_file)
 
-    if not export_data.get('export', False):
-        export_data['export'] = False
+    if not export_data.get("export", False):
+        export_data["export"] = False
         topology_mapping = {}
 
         # Export Artifacts from Apigee OPDK/Edge (4G)
         if resources_list == []:
             logger.error(
-                '''Please specify --resources argument.
-                Use -h with the script for help''')
+                """Please specify --resources argument.
+                Use -h with the script for help"""
+            )
             return
 
         export_data = export_artifacts(cfg, resources_list)
-        export_data['export'] = True
+        export_data["export"] = True
         write_json(export_data_file, export_data)
 
-    if (not report.get('report', False) or
-            not export_data.get('validation_report', False)):
-        report = validate_artifacts(cfg, resources_list, export_data)
-        report['report'] = True
-        export_data['validation_report'] = report
+    if not report.get("report", False) or not export_data.get(
+        "validation_report", False
+    ):
+        report = validate_artifacts(
+            cfg, resources_list, export_data, args.skip_target_validation
+        )
+        report["report"] = True
+        export_data["validation_report"] = report
         write_json(export_data_file, export_data)
         write_json(report_data_file, report)
     # Visualize artifacts
@@ -133,13 +160,12 @@ def main():
 
     # get Apigee OPDK/Edge (4G) topology mapping
     if not os.environ.get("IGNORE_OPDK_TOPOLOGY") == "true":
-        source_apigee_version = cfg.get('inputs', 'SOURCE_APIGEE_VERSION')
-        if source_apigee_version == 'OPDK':
+        if source_apigee_version == "OPDK":
             topology_mapping = get_topology(cfg)
 
     # Qualification report
     qualification_report(cfg, backend_cfg, export_data, topology_mapping)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
