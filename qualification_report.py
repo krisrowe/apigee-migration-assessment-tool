@@ -991,9 +991,16 @@ class QualificationReport():  # noqa pylint: disable=R0902,R0904
                 validation_report_sheet.write(row, col, values['name'])
                 col += 1
                 if values['importable']:
-                    validation_report_sheet.write(row, col, values['importable'], self.green_format)   # noqa pylint: disable=C0301
-                    col += 1
-                    validation_report_sheet.write(row, col, 'N/A')
+                    violations = [{'violations': []}] if len(values.get('reason',[])) == 0 else values.get('reason',[])   # noqa pylint: disable=C0301
+                    if len(violations[0].get('violations', [])) == 0:
+                        validation_report_sheet.write(row, col, values['importable'], self.green_format)   # noqa pylint: disable=C0301
+                        col += 1
+                        validation_report_sheet.write(row, col, 'N/A')
+                    else:
+                        validation_report_sheet.write(row, col, values['importable'], self.yellow_format)   # noqa pylint: disable=C0301
+                        col += 1
+                        reason_str = violations[0].get('violations', [])
+                        validation_report_sheet.write(row, col, json.dumps(reason_str, indent=2))
                 if not values['importable']:
                     validation_report_sheet.write(row, col, values['importable'], self.danger_format)   # noqa pylint: disable=C0301
                     col += 1
@@ -1007,7 +1014,6 @@ class QualificationReport():  # noqa pylint: disable=R0902,R0904
                         ]}
                     else:
                         reason_str = violations[0].get('violations', [])
-
                     validation_report_sheet.write(row, col, json.dumps(reason_str, indent=2))   # noqa pylint: disable=C0301
                 col += 1
                 if 'imported' in values:

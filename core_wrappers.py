@@ -69,7 +69,7 @@ SEPERATOR = " | "
 DEFAULT_GCP_ENV_TYPE = "ENVIRONMENT_TYPE_UNSPECIFIED"
 
 
-def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable=R0914
+def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable=R0914,R0911
     """Performs pre-validation checks on the input configuration.
 
     This function validates the provided configuration `cfg` to ensure
@@ -115,16 +115,16 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
                     missing_keys.append((section, key))
         else:
             logger.error(
-                f"Section {section} is missing in input.properties"
-            )  # noqa pylint: disable=W1203
+                "Section %s is missing in input.properties", section
+            )
             return False
 
     if missing_keys:
         logger.error("Missing keys in input.properties:")
         for section, key in missing_keys:
             logger.error(
-                f" - Section: {section}, Key: {key}"
-            )  # noqa pylint: disable=W1203
+                "Section: %s, Key: %s", section, key
+            )
         return False
     logger.info("All required keys are present in input.properties")
 
@@ -175,7 +175,7 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     return True
 
 
-def export_artifacts(cfg, resources_list):
+def export_artifacts(cfg, resources_list): # noqa pylint: disable=R0914
     """Exports artifacts from the source Apigee environment.
 
     Exports specified Apigee artifacts (proxies, shared flows, etc.)
@@ -368,7 +368,7 @@ def validate_artifacts(
             export_data.get("orgConfig", {}).get("apis", {}).keys()
         )  # noqa pylint: disable=C0301
         apis_validation = apigee_validator.validate_proxy_bundles(
-            apis, export_dir, "apis"
+            apis, export_dir, target_export_dir, "apis"
         )  # noqa pylint: disable=C0301
         # Todo  # pylint: disable=W0511
         # validate proxy unifier output bundles
@@ -378,7 +378,7 @@ def validate_artifacts(
             export_data.get("orgConfig", {}).get("sharedflows", {}).keys()
         )  # noqa pylint: disable=C0301
         sf_validation = apigee_validator.validate_proxy_bundles(
-            sharedflows, export_dir, "sharedflows"
+            sharedflows, export_dir, target_export_dir, "sharedflows"
         )  # noqa pylint: disable=C0301
         # Todo  # pylint: disable=W0511
         # validate proxy unifier output bundles

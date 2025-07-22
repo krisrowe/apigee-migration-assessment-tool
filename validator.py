@@ -26,6 +26,8 @@ hybrid environments.
 """
 
 import copy
+import zipfile
+import xml.etree.ElementTree as ET
 
 from assessment_mapping.resourcefiles import resourcefiles_mapping
 from assessment_mapping.targetservers import targetservers_mapping
@@ -265,7 +267,7 @@ class ApigeeValidator:
             return True, []
         return False, errors
 
-    def validate_proxy_bundles(self, export_objects, export_dir, api_type):
+    def validate_proxy_bundles(self, export_objects, export_dir, target_export_dir, api_type):  # noqa pylint: disable=C0301
         """Validates proxy bundles.
 
         Args:
@@ -303,11 +305,77 @@ class ApigeeValidator:
             else:
                 if api_name in objects:
                     each_validation["imported"] = True
+                    each_comparison = self.compare_proxy(
+                        f"{export_dir}/{api_type}/{proxy_bundle}",
+                        f"{target_export_dir}/{api_type}/{proxy_bundle}",
+                    )
+                    each_validation['reason'][0]['violations'].extend(each_comparison)
                 else:
                     each_validation["imported"] = False
             validation[api_type].append(each_validation)
             each_validation = {}
         return validation
+
+    def compare_proxy(self, source_proxy_bundle: str, target_proxy_bundle: str):
+        """Validates proxy bundles.
+
+        Args:
+            source_proxy_bundle (str): Source proxy bundle.
+            target_proxy_bundle (str): Target proxy bundle.
+
+        Returns:
+            list: comparison results for API
+                    proxy.
+        """
+        diff = []
+        try:
+            with zipfile.ZipFile(source_proxy_bundle, "r") as source_zip:
+                with zipfile.ZipFile(target_proxy_bundle, "r") as target_zip:
+                    source_files = {
+                        f.filename for f in source_zip.infolist() if not f.is_dir()
+                    }
+                    target_files = {
+                        f.filename for f in target_zip.infolist() if not f.is_dir()
+                    }
+                    for file in source_files:
+                        file_dissect = file.split('/')
+                        if (file.endswith(".xml") and
+                            len(file_dissect) > 2 and
+                            file_dissect[1] not in ['manifests']):
+                            source_xml = ET.fromstring(source_zip.read(file))
+                            if file in target_files:
+                                target_xml = ET.fromstring(target_zip.read(file))
+                                if not self.compare_xml_elements(
+                                    source_xml, target_xml
+                                ):
+                                    diff.append(f"Mismatch in file: {file}")
+                            else:
+                                diff.append(f"File missing in target: {file}")
+        except (zipfile.BadZipFile, FileNotFoundError) as e:
+            diff.append(f"Error processing proxy bundles: {e}")
+        return diff
+
+    def compare_xml_elements(self, elem1, elem2):
+        """Validates proxy bundles.
+
+        Args:
+            elem1 (str): Source proxy xml.
+            elem2 (str): Target proxy xml.
+
+        Returns:
+            bool:
+        """
+        if elem1.tag != elem2.tag:
+            return False
+        if elem1.text and elem1.text.strip() != elem2.text and elem2.text.strip():
+            return False
+        if elem1.attrib != elem2.attrib:
+            return False
+        if len(elem1) != len(elem2):
+            return False
+        return all(
+            self.compare_xml_elements(c1, c2) for c1, c2 in zip(elem1, elem2)
+        )
 
     @retry()
     def validate_proxy(self, export_dir, each_api_type, proxy_bundle):
@@ -341,7 +409,7 @@ class ApigeeValidator:
                 "details", "ERROR"
             )  # noqa pylint: disable=C0301
         else:
-            obj["importable"], obj["reason"] = True, []
+            obj["importable"], obj["reason"] = True, [{"violations":[]}]
         return obj
 
     def validate_env_flowhooks(self, env, flowhooks):
