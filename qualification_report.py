@@ -1000,7 +1000,7 @@ class QualificationReport():  # noqa pylint: disable=R0902,R0904
                         validation_report_sheet.write(row, col, values['importable'], self.yellow_format)   # noqa pylint: disable=C0301
                         col += 1
                         reason_str = violations[0].get('violations', [])
-                        validation_report_sheet.write(row, col, json.dumps(reason_str, indent=2))
+                        validation_report_sheet.write(row, col, json.dumps(reason_str, indent=2))  # noqa pylint: disable=C0301
                 if not values['importable']:
                     validation_report_sheet.write(row, col, values['importable'], self.danger_format)   # noqa pylint: disable=C0301
                     col += 1

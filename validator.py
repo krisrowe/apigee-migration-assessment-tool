@@ -27,7 +27,7 @@ hybrid environments.
 
 import copy
 import zipfile
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 
 from assessment_mapping.resourcefiles import resourcefiles_mapping
 from assessment_mapping.targetservers import targetservers_mapping
@@ -85,7 +85,7 @@ class ApigeeValidator:
         """
         validation_resources = []
         target_resources = (
-            self.target_export_data.get("orgConfig", {}).get(resource_type, {}).keys()
+            self.target_export_data.get("orgConfig", {}).get(resource_type, {}).keys()  # noqa
         )  # noqa pylint: disable=C0301
         for each_obj, obj in resources.items():
             if resource_type == "developers":
@@ -124,7 +124,7 @@ class ApigeeValidator:
             )  # noqa pylint: disable=C0301
         else:
             kvms = (
-                self.target_export_data.get("orgConfig", {}).get("kvms", {}).keys()
+                self.target_export_data.get("orgConfig", {}).get("kvms", {}).keys()  # noqa
             )  # noqa pylint: disable=C0301
         for each_kvm, obj in keyvaluemaps.items():
             if "name" not in obj:
@@ -161,7 +161,7 @@ class ApigeeValidator:
         )  # noqa pylint: disable=C0301
         for _, target_server_data in target_servers.items():
             obj = copy.copy(target_server_data)
-            obj["importable"], obj["reason"] = self.validate_env_targetserver_resource(
+            obj["importable"], obj["reason"] = self.validate_env_targetserver_resource(  # noqa
                 target_server_data
             )  # noqa pylint: disable=C0301
             if not self.target_compare:
@@ -195,7 +195,7 @@ class ApigeeValidator:
                 errors.append(
                     {
                         "key": key,
-                        "error_msg": targetservers_mapping[key]["invalid_values"][
+                        "error_msg": targetservers_mapping[key]["invalid_values"][  # noqa
                             targetservers[key]
                         ],  # noqa pylint: disable=C0301
                     }
@@ -226,7 +226,7 @@ class ApigeeValidator:
         )  # noqa pylint: disable=C0301
         for resourcefile in resourcefiles.keys():
             obj = copy.copy(resourcefiles[resourcefile])
-            obj["importable"], obj["reason"] = self.validate_env_resourcefile_resource(
+            obj["importable"], obj["reason"] = self.validate_env_resourcefile_resource(  # noqa
                 resourcefiles[resourcefile]
             )  # noqa pylint: disable=C0301
             if not self.target_compare:
@@ -252,12 +252,12 @@ class ApigeeValidator:
         errors = []
         for key in resourcefiles_mapping.keys():
             if (
-                metadata[key] in resourcefiles_mapping[key]["invalid_values"].keys()
+                metadata[key] in resourcefiles_mapping[key]["invalid_values"].keys()  # noqa 
             ):  # noqa
                 errors.append(
                     {
                         "key": key,
-                        "error_msg": resourcefiles_mapping[key]["invalid_values"][
+                        "error_msg": resourcefiles_mapping[key]["invalid_values"][  # noqa
                             metadata[key]
                         ],  # noqa pylint: disable=C0301
                     }
@@ -279,7 +279,7 @@ class ApigeeValidator:
                 sharedflows.
         """
         objects = (
-            self.target_export_data.get("orgConfig", {}).get(api_type, {}).keys()
+            self.target_export_data.get("orgConfig", {}).get(api_type, {}).keys()  # noqa
         )  # noqa pylint: disable=C0301
         validation = {api_type: []}
         bundle_dir = f"{export_dir}/{api_type}"
@@ -296,7 +296,7 @@ class ApigeeValidator:
                 each_validation["reason"] = [
                     {
                         "violations": [
-                            "Proxy bundle parse issue OR No valid revisions found"
+                            "Proxy bundle parse issue OR No valid revisions found"  # noqa
                         ]  # noqa pylint: disable=C0301
                     }
                 ]
@@ -309,14 +309,14 @@ class ApigeeValidator:
                         f"{export_dir}/{api_type}/{proxy_bundle}",
                         f"{target_export_dir}/{api_type}/{proxy_bundle}",
                     )
-                    each_validation['reason'][0]['violations'].extend(each_comparison)
+                    each_validation['reason'][0]['violations'].extend(each_comparison)  # noqa
                 else:
                     each_validation["imported"] = False
             validation[api_type].append(each_validation)
             each_validation = {}
         return validation
 
-    def compare_proxy(self, source_proxy_bundle: str, target_proxy_bundle: str):
+    def compare_proxy(self, source_proxy_bundle: str, target_proxy_bundle: str):  # noqa
         """Validates proxy bundles.
 
         Args:
@@ -332,19 +332,19 @@ class ApigeeValidator:
             with zipfile.ZipFile(source_proxy_bundle, "r") as source_zip:
                 with zipfile.ZipFile(target_proxy_bundle, "r") as target_zip:
                     source_files = {
-                        f.filename for f in source_zip.infolist() if not f.is_dir()
+                        f.filename for f in source_zip.infolist() if not f.is_dir()  # noqa
                     }
                     target_files = {
-                        f.filename for f in target_zip.infolist() if not f.is_dir()
+                        f.filename for f in target_zip.infolist() if not f.is_dir()  # noqa
                     }
                     for file in source_files:
                         file_dissect = file.split('/')
                         if (file.endswith(".xml") and
-                            len(file_dissect) > 2 and
-                            file_dissect[1] not in ['manifests']):
+                                len(file_dissect) > 2 and
+                                file_dissect[1] not in ['manifests']):
                             source_xml = ET.fromstring(source_zip.read(file))
                             if file in target_files:
-                                target_xml = ET.fromstring(target_zip.read(file))
+                                target_xml = ET.fromstring(target_zip.read(file))  # noqa
                                 if not self.compare_xml_elements(
                                     source_xml, target_xml
                                 ):
@@ -367,7 +367,7 @@ class ApigeeValidator:
         """
         if elem1.tag != elem2.tag:
             return False
-        if elem1.text and elem1.text.strip() != elem2.text and elem2.text.strip():
+        if elem1.text and elem1.text.strip() != elem2.text and elem2.text.strip():  # noqa
             return False
         if elem1.attrib != elem2.attrib:
             return False
@@ -396,7 +396,7 @@ class ApigeeValidator:
             return {
                 "name": api_name,
                 "importable": False,
-                "reason": [{"violations": ["Validation skipped by user flag."]}],
+                "reason": [{"violations": ["Validation skipped by user flag."]}],  # noqa
             }
 
         validation_response = self.xorhybrid.create_api(
@@ -405,11 +405,11 @@ class ApigeeValidator:
         obj = copy.copy(validation_response)
         if "error" in validation_response:
             obj["name"] = api_name
-            obj["importable"], obj["reason"] = False, validation_response["error"].get(
+            obj["importable"], obj["reason"] = False, validation_response["error"].get(  # noqa
                 "details", "ERROR"
             )  # noqa pylint: disable=C0301
         else:
-            obj["importable"], obj["reason"] = True, [{"violations":[]}]
+            obj["importable"], obj["reason"] = True, [{"violations": []}]
         return obj
 
     def validate_env_flowhooks(self, env, flowhooks):
@@ -427,7 +427,7 @@ class ApigeeValidator:
         for flowhook in flowhooks.keys():
             obj = copy.copy(flowhooks[flowhook])
             obj["name"] = flowhook
-            obj["importable"], obj["reason"] = self.validate_env_flowhooks_resource(
+            obj["importable"], obj["reason"] = self.validate_env_flowhooks_resource(  # noqa
                 env, flowhooks[flowhook]
             )  # noqa pylint: disable=C0301
             fh = (
@@ -459,7 +459,7 @@ class ApigeeValidator:
         """
         if self.skip_target_validation:
             return False, [
-                {"key": "sharedFlow", "error_msg": "Validation skipped by user flag."}
+                {"key": "sharedFlow", "error_msg": "Validation skipped by user flag."}  # noqa
             ]
         errors = []
         if "sharedFlow" in flowhook:

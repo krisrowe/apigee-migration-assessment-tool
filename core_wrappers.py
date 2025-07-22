@@ -69,7 +69,7 @@ SEPERATOR = " | "
 DEFAULT_GCP_ENV_TYPE = "ENVIRONMENT_TYPE_UNSPECIFIED"
 
 
-def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable=R0914,R0911
+def pre_validation_checks(cfg, skip_target_validation=False):  # noqa pylint: disable=R0914,R0911
     """Performs pre-validation checks on the input configuration.
 
     This function validates the provided configuration `cfg` to ensure
@@ -87,7 +87,7 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     Returns:
         bool: True if all checks pass, False otherwise.
     """
-    logger.info("------------------- Pre Validation Checks -----------------------")
+    logger.info("------------------- Pre Validation Checks -------------------")  # noqa
 
     # validate input.properties
     required_keys = {
@@ -133,9 +133,11 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     source_org = cfg.get("inputs", "SOURCE_ORG")
     source_auth_token = get_source_auth_token()
     source_auth_type = cfg.get("inputs", "SOURCE_AUTH_TYPE")
-    ssl_verification = cfg.getboolean("inputs", "SSL_VERIFICATION", fallback=True)
+    ssl_verification = cfg.getboolean("inputs",
+                                      "SSL_VERIFICATION", fallback=True)
     opdk = ApigeeClassic(
-        source_url, source_org, source_auth_token, source_auth_type, ssl_verification
+        source_url, source_org, source_auth_token,
+        source_auth_type, ssl_verification
     )
     if not opdk.get_org():
         logger.error("No source organizations found")
@@ -143,7 +145,8 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
 
     if skip_target_validation:
         logger.info(
-            "Skipping target pre-validation checks as --skip-target-validation is set."
+            "Skipping target pre-validation checks"
+            "as --skip-target-validation is set."
         )
         return True
 
@@ -153,7 +156,8 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
     gcp_token = get_access_token()
     gcp_env_type = DEFAULT_GCP_ENV_TYPE
 
-    xorhybrid = ApigeeNewGen(target_url, gcp_project_id, gcp_token, gcp_env_type)
+    xorhybrid = ApigeeNewGen(target_url, gcp_project_id,
+                             gcp_token, gcp_env_type)
     missing_permissions = xorhybrid.validate_permissions()
     if len(missing_permissions) > 0:
         logger.error(  # pylint: disable=W1203
@@ -161,7 +165,8 @@ def pre_validation_checks(cfg, skip_target_validation=False):  # pylint: disable
             f"{missing_permissions}"
         )  # noqa pylint: disable=C0301,W1203
         logger.info(
-            "Ensure user/service account has roles/apigee.readOnlyAdmin role and "
+            "Ensure user/service account has "
+            "roles/apigee.readOnlyAdmin role and "
             "apigee.proxies.create permission"
         )  # noqa pylint: disable=C0301,W1203
         return False
@@ -209,7 +214,8 @@ def export_artifacts(cfg, resources_list): # noqa pylint: disable=R0914
     create_dir(api_export_dir)
     create_dir(sf_export_dir)
     apigee_export = ApigeeExporter(
-        source_url, source_org, source_auth_token, source_auth_type, ssl_verification
+        source_url, source_org, source_auth_token,
+        source_auth_type, ssl_verification
     )
     if os.environ.get("IGNORE_EXPORT") == "true":
         export_data = {}
@@ -226,7 +232,8 @@ def export_artifacts(cfg, resources_list): # noqa pylint: disable=R0914
     proxy_dependency_map = sharding.proxy_dependency_map(cfg, export_data)
     export_data["proxy_dependency_map"] = proxy_dependency_map
     if not os.environ.get("IGNORE_ENV_SHARD") == "true":
-        sharding_output = sharding.sharding_wrapper(proxy_dependency_map, export_data)
+        sharding_output = sharding.sharding_wrapper(
+            proxy_dependency_map, export_data)
         export_data["sharding_output"] = sharding_output
     return export_data
 
@@ -328,7 +335,8 @@ def validate_artifacts(
         keyvaluemaps = export_data["envConfig"][env]["kvms"]
         if "all" in resources_list or "keyvaluemaps" in resources_list:
             report[env + SEPERATOR + "targetServers"] = (
-                apigee_validator.validate_env_targetservers(env, target_servers)
+                apigee_validator.validate_env_targetservers(
+                    env, target_servers)
             )  # noqa pylint: disable=C0301
         if "all" in resources_list or "resourcefiles" in resources_list:
             report[env + SEPERATOR + "resourcefiles"] = (
@@ -339,7 +347,7 @@ def validate_artifacts(
                 apigee_validator.validate_env_flowhooks(env, flowhooks)
             )  # noqa
         if "all" in resources_list or "keyvaluemaps" in resources_list:
-            report[env + SEPERATOR + "keyvaluemaps"] = apigee_validator.validate_kvms(
+            report[env + SEPERATOR + "keyvaluemaps"] = apigee_validator.validate_kvms( # noqa
                 env, keyvaluemaps
             )  # noqa
 
@@ -449,7 +457,7 @@ def visualize_artifacts(
         "title"
     ] = f'<a href={org_url} target="_blank">Organization - {source_url}</a>'  # noqa pylint: disable=C0301
     for key, value in exportorg.items():  # noqa pylint: disable=R1702
-        dg.add_edge("ORG" + SEPERATOR + key.upper(), "ORG" + SEPERATOR + source_url)
+        dg.add_edge("ORG" + SEPERATOR + key.upper(), "ORG" + SEPERATOR + source_url) # noqa
         dg.nodes["ORG" + SEPERATOR + key.upper()]["size"] = 20
 
         # for titles of key nodes
@@ -486,7 +494,7 @@ def visualize_artifacts(
             continue
 
         for name, val in value.items():
-            dg.add_edge("ORG" + SEPERATOR + name, "ORG" + SEPERATOR + key.upper())
+            dg.add_edge("ORG" + SEPERATOR + name, "ORG" + SEPERATOR + key.upper()) # noqa
             if key in ["apis", "sharedflows"]:
                 dg.nodes["ORG" + SEPERATOR + name]["title"] = (
                     key[:-1] + " named " + name
@@ -563,28 +571,28 @@ def visualize_artifacts(
             threshold = 100
             if len(val) > threshold:
                 dg.add_edge(
-                    "More than " + str(threshold) + " " + resource + " in env " + env,
+                    "More than " + str(threshold) + " " + resource + " in env " + env, # noqa
                     env + SEPERATOR + resource.upper(),
                 )
                 dg.nodes[
-                    "More than " + str(threshold) + " " + resource + " in env " + env
+                    "More than " + str(threshold) + " " + resource + " in env " + env # noqa
                 ][
                     "color"
                 ] = "black"  # noqa pylint: disable=C0301
                 dg.nodes[
-                    "More than " + str(threshold) + " " + resource + " in env " + env
+                    "More than " + str(threshold) + " " + resource + " in env " + env # noqa
                 ][
                     "size"
                 ] = 20  # noqa pylint: disable=C0301
                 dg.nodes[
-                    "More than " + str(threshold) + " " + resource + " in env " + env
+                    "More than " + str(threshold) + " " + resource + " in env " + env # noqa
                 ]["title"] = (
                     "Total - " + str(len(val)) + " " + resource
                 )  # noqa pylint: disable=C0301
                 continue
 
             for name, _ in val.items():
-                dg.add_edge(env + SEPERATOR + name, env + SEPERATOR + resource.upper())
+                dg.add_edge(env + SEPERATOR + name, env + SEPERATOR + resource.upper()) # noqa
                 dg.nodes[env + SEPERATOR + name]["title"] = (
                     "Env " + env + " level " + resource[:-1] + " named " + name
                 )
@@ -592,7 +600,7 @@ def visualize_artifacts(
                 # check if importable or not
                 if resource in ["targetServers", "resourcefiles"]:
                     if (
-                        final_report[env + SEPERATOR + resource][name] is not True
+                        final_report[env + SEPERATOR + resource][name] is not True # noqa
                     ):  # noqa
                         dg.nodes[env + SEPERATOR + name]["color"] = "red"
                         error_message = (
@@ -604,7 +612,7 @@ def visualize_artifacts(
                             "<b>Reason</b> : " + error_message
                         )  # noqa pylint: disable=C0301
 
-    net = Network(notebook=True, cdn_resources="in_line", width=1000, height=800)
+    net = Network(notebook=True, cdn_resources="in_line", width=1000, height=800) # noqa
     net.from_nx(dg)
     target_dir = cfg.get("inputs", "TARGET_DIR")
     visualization_graph_file = backend_cfg.get(
@@ -634,7 +642,7 @@ def qualification_report(cfg, backend_cfg, export_data, topology_mapping):
     Returns:
         None
     """
-    logger.info("------------------- Qualification Report -----------------------")
+    logger.info("------------------- Qualification Report -----------------------") # noqa
 
     target_dir = cfg.get("inputs", "TARGET_DIR")
     org_name = cfg.get("inputs", "SOURCE_ORG")
@@ -698,7 +706,7 @@ def get_topology(cfg):
     Returns:
         dict: A dictionary containing the topology data.
     """
-    logger.info("------------------- Installation Topology -----------------------")
+    logger.info("------------------- Installation Topology -----------------------")  # noqa
 
     source_url = cfg.get("inputs", "SOURCE_URL")
     source_org = cfg.get("inputs", "SOURCE_ORG")
@@ -710,7 +718,7 @@ def get_topology(cfg):
 
     pod_component_mapping = apigee_topology.get_topology_mapping()
 
-    data_center_mapping = apigee_topology.get_data_center_mapping(pod_component_mapping)
+    data_center_mapping = apigee_topology.get_data_center_mapping(pod_component_mapping)  # noqa
 
     apigee_topology.draw_topology_graph_diagram(data_center_mapping)
 
