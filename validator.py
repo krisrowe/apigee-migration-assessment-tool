@@ -27,7 +27,7 @@ hybrid environments.
 
 import copy
 import zipfile
-import defusedxml.ElementTree as ET
+import defusedxml.ElementTree as ET  # pylint: disable=E0401
 
 from assessment_mapping.resourcefiles import resourcefiles_mapping
 from assessment_mapping.targetservers import targetservers_mapping
