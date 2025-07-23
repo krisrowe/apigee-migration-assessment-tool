@@ -94,13 +94,15 @@ def main():
         default=False,
         dest="skip_target_validation",
         help=(
-            "Skip validation of APIs and SharedFlows " "against the target environment."
+            "Skip validation of APIs and SharedFlows "
+            "against the target environment."
         ),
     )
 
     args = parser.parse_args()
     resources_list = (
-        [r.strip() for r in args.resources.split(",")] if args.resources else []
+        [r.strip() for r in args.resources.split(",")]
+        if args.resources else []
     )
 
     # Pre validation checks
@@ -108,9 +110,11 @@ def main():
     backend_cfg = parse_config("backend.properties")
 
     source_apigee_version = cfg.get("inputs", "SOURCE_APIGEE_VERSION").upper()
-    if args.skip_target_validation and source_apigee_version in ["X", "HYBRID"]:
+    if (args.skip_target_validation and
+            source_apigee_version in ["X", "HYBRID"]):
         logger.error(
-            "--skip-target-validation is not applicable when source is Apigee X/Hybrid."
+            "--skip-target-validation is not applicable "
+            "when source is Apigee X/Hybrid."
         )
         return
 

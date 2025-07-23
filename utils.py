@@ -142,7 +142,7 @@ def create_dir(dir_name):
         logger.info(f"Directory \"{dir_name}\" already exists", exc_info=EXEC_INFO)  # noqa pylint: disable=W1203
 
 
-def list_dir(dir_name, isok=False):
+def list_dir(dir_name, isok=False):  # noqa pylint: disable=R1710
     """Lists the contents of a directory.
 
     Args:

@@ -30,7 +30,7 @@ from utils import write_json, parse_config
 from base_logger import logger
 
 
-class ApigeeTopology():
+class ApigeeTopology():  # noqa pylint: disable=R0902
     """Represents and visualizes Apigee topology.
 
     Retrieves topology information from Apigee, creates data center
