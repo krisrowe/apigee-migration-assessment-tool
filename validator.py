@@ -52,6 +52,7 @@ class ApigeeValidator:
         target_export_data,
         target_compare,
         skip_target_validation=False,
+        ssl_verify=True
     ):  # noqa pylint: disable=R0913,W0012,R0917
         """Initializes ApigeeValidator.
 
@@ -66,7 +67,7 @@ class ApigeeValidator:
         self.target_compare = target_compare
         self.skip_target_validation = skip_target_validation
         if not self.skip_target_validation:
-            self.xorhybrid = ApigeeNewGen(baseurl, project_id, token, env_type)
+            self.xorhybrid = ApigeeNewGen(baseurl, project_id, token, env_type, ssl_verify)
         else:
             self.xorhybrid = None
 
