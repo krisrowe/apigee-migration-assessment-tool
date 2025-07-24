@@ -32,7 +32,7 @@ class ApigeeNewGen():   # noqa pylint: disable=R0902
     Provides methods to interact with Apigee X or hybrid environments,
     including creating and validating API proxies and shared flows.
     """
-    def __init__(self, baseurl, project_id, token, env_type, ssl_verify):
+    def __init__(self, baseurl, project_id, token, env_type, ssl_verify): # noqa pylint: disable=R0913,R0917
         """Initializes the ApigeeNewGen client.
 
         Args:

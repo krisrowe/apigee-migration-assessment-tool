@@ -67,7 +67,8 @@ class ApigeeValidator:
         self.target_compare = target_compare
         self.skip_target_validation = skip_target_validation
         if not self.skip_target_validation:
-            self.xorhybrid = ApigeeNewGen(baseurl, project_id, token, env_type, ssl_verify)
+            self.xorhybrid = ApigeeNewGen(baseurl, project_id, token, env_type,
+                                          ssl_verify)
         else:
             self.xorhybrid = None
 
@@ -253,7 +254,7 @@ class ApigeeValidator:
         errors = []
         for key in resourcefiles_mapping.keys():
             if (
-                metadata[key] in resourcefiles_mapping[key]["invalid_values"].keys()  # noqa 
+                metadata[key] in resourcefiles_mapping[key]["invalid_values"].keys()  # noqa
             ):  # noqa
                 errors.append(
                     {
