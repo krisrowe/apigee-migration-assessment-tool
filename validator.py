@@ -33,6 +33,7 @@ from assessment_mapping.resourcefiles import resourcefiles_mapping
 from assessment_mapping.targetservers import targetservers_mapping
 from nextgen import ApigeeNewGen
 from utils import list_dir, retry
+from base_logger import logger
 
 
 class ApigeeValidator:
@@ -163,6 +164,7 @@ class ApigeeValidator:
         )  # noqa pylint: disable=C0301
         for _, target_server_data in target_servers.items():
             obj = copy.copy(target_server_data)
+            logger.info(f"Validating Target Server: {target_server_data.get('name','')}")  # noqa pylint: disable=W1203
             obj["importable"], obj["reason"] = self.validate_env_targetserver_resource(  # noqa
                 target_server_data
             )  # noqa pylint: disable=C0301
@@ -228,6 +230,7 @@ class ApigeeValidator:
         )  # noqa pylint: disable=C0301
         for resourcefile in resourcefiles.keys():
             obj = copy.copy(resourcefiles[resourcefile])
+            logger.info(f"Validating Resource File: {resourcefile}")  # noqa pylint: disable=W1203
             obj["importable"], obj["reason"] = self.validate_env_resourcefile_resource(  # noqa
                 resourcefiles[resourcefile]
             )  # noqa pylint: disable=C0301
@@ -289,6 +292,7 @@ class ApigeeValidator:
         for api_name in export_objects:
             proxy_bundle = f"{api_name}.zip"
             if proxy_bundle in export_bundles:
+                logger.info(f"Validating {api_type}: {api_name}")  # noqa pylint: disable=W1203
                 each_validation = self.validate_proxy(
                     bundle_dir, api_type, proxy_bundle
                 )  # noqa pylint: disable=C0301
@@ -429,6 +433,7 @@ class ApigeeValidator:
         for flowhook in flowhooks.keys():
             obj = copy.copy(flowhooks[flowhook])
             obj["name"] = flowhook
+            logger.info(f"Validating Flow Hook: {flowhook}")  # noqa pylint: disable=W1203
             obj["importable"], obj["reason"] = self.validate_env_flowhooks_resource(  # noqa
                 env, flowhooks[flowhook]
             )  # noqa pylint: disable=C0301
