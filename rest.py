@@ -248,6 +248,10 @@ class RestClient(object):  # noqa pylint: disable=R0205
         Returns:
             The content of the response.
         """
+        status_code = response.status_code
+        if status_code == 403:
+            logger.warning(f"{response.request.method} Access to URL {response.request.url} is forbidden")  # noqa pylint: disable=C0301,W1203
+            return {}
         return self._parse(response).content()
 
     def _parse(self, response):
