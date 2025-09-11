@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -59,7 +59,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
@@ -72,12 +72,12 @@ jobs:
         id: get_tag
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "tag=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
+            echo "tag=pr-${{ github.event.number }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
           else
             # For feature branches, etc.
-            echo "tag=${{ github.ref_name }}" | sed 's/\//-/g' >> $GITHUB_OUTPUT
+            echo "tag=${{ github.ref_name }}" | sed 's/\//-/g' >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build and push Docker image
@@ -109,12 +109,12 @@ jobs:
 
       - name: Fetch input.properties
         run: |
-            echo ${{ secrets.OPDK_INPUT_PROPERTIES }} | base64 -d > ${{ github.workspace }}/input.properties
+            echo "${{ secrets.OPDK_INPUT_PROPERTIES }}" | base64 -d > "${{ github.workspace }}/input.properties"
 
       - name: Run Docker container
         run: |
           docker run \
-            -v ${{ github.workspace }}/input.properties:/app/input.properties \
+            -v "${{ github.workspace }}/input.properties:/app/input.properties" \
             -e "SOURCE_AUTH_TOKEN=${{ secrets.APIGEE_OPDK_TOKEN }}" \
             -e "APIGEE_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" \
             "${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
