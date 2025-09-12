@@ -290,6 +290,7 @@ class ApigeeValidator:
         bundle_dir = f"{export_dir}/{api_type}"
         export_bundles = list_dir(bundle_dir)
         for api_name in export_objects:
+            each_validation = {}
             proxy_bundle = f"{api_name}.zip"
             if proxy_bundle in export_bundles:
                 logger.info(f"Validating {api_type}: {api_name}")  # noqa pylint: disable=W1203

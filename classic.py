@@ -95,7 +95,8 @@ class ApigeeClassic():
                 start_key = each_org_object[-1]
                 params = {'startKey': start_key}
                 each_org_object = self.client.get(start_url, params=params)
-                each_org_object.remove(start_key)
+                if start_key in each_org_object:
+                    each_org_object.remove(start_key)
                 org_objects.extend(each_org_object)
         else:
             url = f"{self.baseurl}/organizations/{self.org}/{org_object}"
@@ -129,7 +130,8 @@ class ApigeeClassic():
             params = {'startKey': start_key}
             each_org_object = self.client.get(start_url, params=params)
             each_org_object = each_org_object.get(expand_key, {})
-            each_org_object.pop(0)
+            if each_org_object:
+                each_org_object.pop(0)
             for each_item in each_org_object:
                 org_objects[each_item[id_key]] = each_item
         return org_objects

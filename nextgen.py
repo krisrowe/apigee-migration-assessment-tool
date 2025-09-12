@@ -138,7 +138,8 @@ class ApigeeNewGen():   # noqa pylint: disable=R0902
                 params[next_key] = start_key
                 each_org_object_data = self.client.get(start_url, params=params)  # noqa pylint: disable=C0301
                 each_org_object = self._apigee_object_util(org_object, each_org_object_data)  # noqa pylint: disable=C0301
-                each_org_object.remove(start_key)
+                if start_key in each_org_object:
+                    each_org_object.remove(start_key)
                 org_objects.extend(each_org_object)
         else:
             url = f"{self.baseurl}/organizations/{self.project_id}/{org_object}"  # noqa pylint: disable=C0301
@@ -178,7 +179,8 @@ class ApigeeNewGen():   # noqa pylint: disable=R0902
             params[next_key] = start_key    # noqa
             each_org_object_data = self.client.get(start_url, params=params)
             each_org_object = self._apigee_object_util(org_object, each_org_object_data, True)       # noqa pylint: disable=C0301
-            each_org_object.pop(0)
+            if each_org_object:
+                each_org_object.pop(0)
             for each_item in each_org_object:
                 org_objects[each_item[id_key]] = each_item
         return org_objects

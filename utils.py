@@ -290,6 +290,7 @@ def get_proxy_endpoint_count(cfg):
     Returns:
         The proxy endpoint count.
     """
+    proxy_endpoint_count = None
     try:
         proxy_endpoint_count = cfg.getint('unifier', 'proxy_endpoint_count')
         max_proxy_endpoint_count = cfg.getint(
