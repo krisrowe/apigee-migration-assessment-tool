@@ -295,6 +295,7 @@ class ApigeeExporter():  # pylint: disable=R0902
             api_types (list): A list of API types ('apis', 'sharedflows').
         """
         for each_api_type in api_types:
+            self.export_data['orgConfig'][each_api_type] = {}
             logger.info(f"--Exporting {each_api_type} metadata--")    # noqa pylint: disable=W1203
             apis = self.apigee.list_org_objects(each_api_type)
 
