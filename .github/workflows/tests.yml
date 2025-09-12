@@ -57,7 +57,7 @@ jobs:
           pip install -r test-requirements.txt
 
       - name: Run unittests
-        run: python -m unittest discover tests
+        run: python -m unittest discover tests -v
 
   build-and-push:
     runs-on: ubuntu-latest
