@@ -16,11 +16,8 @@
 FROM python:3.12-alpine
 
 # create apigee use and group.
-RUN addgroup -S apigee && adduser -S apigee -G apigee
-
-# As root, install system dependencies.
-# Install build-base as a virtual package to easily remove it later.
-RUN apk add --no-cache --virtual .build-deps build-base && \
+RUN addgroup -S apigee && adduser -S apigee -G apigee && \
+    apk add --no-cache --virtual .build-deps build-base && \
     apk add --no-cache graphviz=12.2.1-r0
 
 WORKDIR /app
@@ -29,11 +26,8 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 
 # As root, install the Python dependencies.
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
-
-# Now that Python packages are installed, remove the build dependencies
-# to keep the final image smaller.
-RUN apk del .build-deps
+RUN python3 -m pip install --no-cache-dir -r requirements.txt && \
+    apk del .build-deps
 
 # Copy the rest of the application code into the container.
 # Use --chown to ensure the 'apigee' user owns these files.
