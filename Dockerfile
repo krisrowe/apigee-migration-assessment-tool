@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 # Create a directory to hold the persistent data
 
 RUN addgroup -S apigee && \
