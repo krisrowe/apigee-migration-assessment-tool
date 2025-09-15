@@ -20,22 +20,19 @@ RUN addgroup -S apigee && adduser -S apigee -G apigee && \
     apk add --no-cache --virtual .build-deps build-base && \
     apk add --no-cache graphviz=12.2.1-r0
 
-WORKDIR /app
-
 # Copy only the requirements file first to leverage Docker's build cache.
+# hadolint ignore=DL3045
 COPY requirements.txt requirements.txt
 
 # As root, install the Python dependencies.
 RUN python3 -m pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 
-# Copy the rest of the application code into the container.
-# Use --chown to ensure the 'apigee' user owns these files.
-COPY --chown=apigee:apigee . .
-
-# Now, switch to the non-root user for security.
-# All subsequent commands will be run as 'apigee'.
 USER apigee
+
+WORKDIR /app
+
+COPY --chown=apigee:apigee . .
 
 HEALTHCHECK \
     CMD python -c 'print()'
