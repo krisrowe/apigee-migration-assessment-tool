@@ -24,7 +24,9 @@ and their configurations. It handles pagination for certain
 entity types and allows exporting API proxy bundles.
 """
 
+import os
 from requests.utils import quote as urlencode  # pylint: disable=E0401
+from base_logger import logger
 from rest import RestClient
 
 
@@ -86,7 +88,7 @@ class ApigeeClassic():
                     depending on the object type.
         """
         org_objects = []
-        object_count = 100
+        object_count = int(os.getenv('PAGE_SIZE', '100'))
         if org_object in self.requires_pagination:
             start_url = f"{self.baseurl}/organizations/{self.org}/{org_object}?count={object_count}"  # noqa pylint: disable=C0301
             each_org_object = self.client.get(start_url)
@@ -95,8 +97,22 @@ class ApigeeClassic():
                 start_key = each_org_object[-1]
                 params = {'startKey': start_key}
                 each_org_object = self.client.get(start_url, params=params)
-                if start_key in each_org_object:
-                    each_org_object.remove(start_key)
+                # Capture the type of the response for diagnostic purposes.
+                logger.debug(f"For '{org_object}' paginated API call, received {type(each_org_object)}.")
+                
+                # Safely handle the API response
+                if isinstance(each_org_object, list):
+                    if start_key in each_org_object:
+                        logger.debug(f"Successfully received next page for '{org_object}'; removing start_key.")
+                        each_org_object.remove(start_key)
+                    else:
+                        # This is the final page or an unexpected list, which is a valid state.
+                        logger.debug(f"Received final page or non-overlapping list for '{org_object}'.")
+                else:
+                    # This handles the customer's error case
+                    logger.error(f"For '{org_object}' paginated API call, expected a list but received {type(each_org_object)} with value: {each_org_object}")
+                    # We must clear the list to break the while loop
+                    each_org_object = []
                 org_objects.extend(each_org_object)
         else:
             url = f"{self.baseurl}/organizations/{self.org}/{org_object}"
@@ -117,7 +133,7 @@ class ApigeeClassic():
                     keyed by their ID, with expanded details.
         """
         org_objects = {}
-        object_count = 100
+        object_count = int(os.getenv('PAGE_SIZE', '100'))
         expand_key = self.can_expand.get(org_object).get('expand_key')
         id_key = self.can_expand.get(org_object).get('id')
         start_url = f"{self.baseurl}/organizations/{self.org}/{org_object}?count={object_count}&expand=true"  # noqa pylint: disable=C0301
