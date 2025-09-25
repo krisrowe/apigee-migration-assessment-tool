@@ -90,7 +90,8 @@ class ApigeeClassic():
         org_objects = []
         object_count = int(os.getenv('PAGE_SIZE', '100'))
         if org_object in self.requires_pagination:
-            start_url = f"{self.baseurl}/organizations/{self.org}/{org_object}?count={object_count}"  # noqa pylint: disable=C0301
+            start_url = (f"{self.baseurl}/organizations/{self.org}/"
+                         f"{org_object}?count={object_count}")
             each_org_object = self.client.get(start_url)
             org_objects.extend(each_org_object)
             while len(each_org_object) > 0:
@@ -98,19 +99,26 @@ class ApigeeClassic():
                 params = {'startKey': start_key}
                 each_org_object = self.client.get(start_url, params=params)
                 # Capture the type of the response for diagnostic purposes.
-                logger.debug(f"For '{org_object}' paginated API call, received {type(each_org_object)}.")
-                
+                logger.debug(f"For '{org_object}' paginated API call, "
+                             f"received {type(each_org_object)}.")
+
                 # Safely handle the API response
                 if isinstance(each_org_object, list):
                     if start_key in each_org_object:
-                        logger.debug(f"Successfully received next page for '{org_object}'; removing start_key.")
+                        logger.debug(f"Successfully received next page for "
+                                     f"'{org_object}'; removing start_key.")
                         each_org_object.remove(start_key)
                     else:
-                        # This is the final page or an unexpected list, which is a valid state.
-                        logger.debug(f"Received final page or non-overlapping list for '{org_object}'.")
+                        # This is the final page or an unexpected list,
+                        # which is a valid state.
+                        logger.debug(f"Received final page or non-overlapping "
+                                     f"list for '{org_object}'.")
                 else:
                     # This handles the customer's error case
-                    logger.error(f"For '{org_object}' paginated API call, expected a list but received {type(each_org_object)} with value: {each_org_object}")
+                    logger.error(f"For '{org_object}' paginated API call, "
+                                 f"expected a list but received "
+                                 f"{type(each_org_object)} with value: "
+                                 f"{each_org_object}")
                     # We must clear the list to break the while loop
                     each_org_object = []
                 org_objects.extend(each_org_object)
