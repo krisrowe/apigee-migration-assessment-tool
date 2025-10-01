@@ -119,7 +119,7 @@ class TestRestClient(unittest.TestCase):
         client = RestClient(auth_type='basic', token='test')
         response = client.get('http://example.com')
 
-        self.assertEqual(response, {})
+        self.assertEqual(response, 'Forbidden')
 
     def test_apigee_error(self):
         """Test apigee error."""
