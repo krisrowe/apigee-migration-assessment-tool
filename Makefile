@@ -5,13 +5,16 @@
 
 # Use bash for all shell commands
 SHELL := /bin/bash
-IMAGE_NAME := apigee-migration-assessment-tool:latest
+IMAGE_NAME := apigee-migration-assessment-tool
 PYTHON_EXEC := venv/bin/python
+COMMIT_ID := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+IMAGE_TAG := $(IMAGE_NAME):$(COMMIT_ID)
+LATEST_TAG := $(IMAGE_NAME):latest
 
 # Define variables that can be overridden from the command line.
 APIGEE_USERNAME ?=
 APIGEE_PASSWORD ?=
-MFA_CODE ?=
+MFA ?=
 SOURCE_ORG ?=
 TESTS ?=
 
@@ -52,14 +55,15 @@ test: install
 	@echo "--- Running unit tests ---"
 	@$(PYTHON_EXEC) -m unittest -v $(TESTS)
 
-# Builds the Docker image.
+# Builds the Docker image with commit-based tag.
 build:
-	@echo "--- Building Docker image: $(IMAGE_NAME) ---"
-	@docker build -t $(IMAGE_NAME) .
+	@echo "--- Building Docker image: $(IMAGE_TAG) ---"
+	@docker build -t $(IMAGE_TAG) .
+	@docker tag $(IMAGE_TAG) $(LATEST_TAG)
 
 # Generates a new auth token and prints it to stdout.
 token:
-	@APIGEE_USERNAME=$(APIGEE_USERNAME) APIGEE_PASSWORD=$(APIGEE_PASSWORD) MFA_CODE=$(MFA_CODE) bash scripts/get_token.sh 
+	@APIGEE_USERNAME=$(APIGEE_USERNAME) APIGEE_PASSWORD=$(APIGEE_PASSWORD) MFA_CODE=$(MFA) bash scripts/get_token.sh 
 
 # Displays the docker run command.
 command:
@@ -72,16 +76,27 @@ command:
 	@echo ""
 	@echo "Copy and paste the following command to run the assessment:"
 	@echo "----------------------------------------------------------------------"
-	@echo 'docker run --rm -v "$$(pwd)/output:/app/target" -v "$$(pwd)/input.properties:/app/input.properties" -e SOURCE_AUTH_TOKEN="$$SOURCE_AUTH_TOKEN" "$(IMAGE_NAME)" --resources all --skip-target-validation'
+	@echo 'docker run --rm -v "$$(pwd)/output:/app/target" -v "$$(pwd)/input.properties:/app/input.properties" -e SOURCE_AUTH_TOKEN="$$SOURCE_AUTH_TOKEN" "$(IMAGE_TAG)" --resources all --skip-target-validation'
 	@echo "----------------------------------------------------------------------"
 	@echo ""
 
-# Builds the image and runs the tool. Automatically generates token if SOURCE_AUTH_TOKEN is not set.
-run: build
+# Generates token first, then builds image if needed, then runs the tool.
+run:
+	@echo "--- Checking for authentication token ---"
 	@if [ -z "$$SOURCE_AUTH_TOKEN" ]; then \
 		echo "SOURCE_AUTH_TOKEN not set. Generating token automatically..."; \
-		SOURCE_AUTH_TOKEN=$$(make token); \
+		SOURCE_AUTH_TOKEN=$$(make token MFA="$(MFA)"); \
 		export SOURCE_AUTH_TOKEN; \
+		echo "Token generated successfully."; \
+	else \
+		echo "Using existing SOURCE_AUTH_TOKEN."; \
+	fi
+	@echo "--- Checking if Docker image needs to be built ---"
+	@if ! docker image inspect $(IMAGE_TAG) >/dev/null 2>&1; then \
+		echo "Image $(IMAGE_TAG) not found. Building..."; \
+		$(MAKE) build; \
+	else \
+		echo "Image $(IMAGE_TAG) already exists. Skipping build."; \
 	fi
 	@echo "--- Running assessment tool ---"
 	@sudo rm -rf output 2>/dev/null || rm -rf output
@@ -90,7 +105,7 @@ run: build
 		-v "$(pwd)/output:/app/target" \
 		-v "$(pwd)/input.properties:/app/input.properties" \
 		-e SOURCE_AUTH_TOKEN="$$SOURCE_AUTH_TOKEN" \
-		"$(IMAGE_NAME)" --resources all --skip-target-validation
+		"$(IMAGE_TAG)" --resources all --skip-target-validation
 
 # Resets the workspace to a fresh-clone state.
 clean:
@@ -112,8 +127,9 @@ help:
 	@echo "Non-Interactive Workflow:"
 	@echo "  1. make setup SOURCE_ORG=\"<org>\""
 	@echo "  2. make build"
-	@echo "  3. export SOURCE_AUTH_TOKEN=\$$(make token APIGEE_USERNAME=\"<user>\" APIGEE_PASSWORD=\"<pass>\" MFA_CODE=\"<mfa>\")"
-	@echo "  4. make run"
+	@echo "  3. make run MFA=\"<mfa_code>\""
+	@echo "  4. Or: export SOURCE_AUTH_TOKEN=\$$(make token APIGEE_USERNAME=\"<user>\" APIGEE_PASSWORD=\"<pass>\" MFA=\"<mfa>\")"
+	@echo "  5. Then: make run"
 	@echo ""
 	@echo "Unit Testing:"
 	@echo "  make install       - Creates a Python 3.12 venv and installs dependencies for local testing."
@@ -127,4 +143,5 @@ help:
 	@echo "  - Docker installed and user added to docker group"
 	@echo "  - If 'make build' fails with permission denied, run:"
 	@echo "    sudo usermod -aG docker \$$USER && newgrp docker"
+	@echo ""aG docker \$$USER && newgrp docker"
 	@echo ""
