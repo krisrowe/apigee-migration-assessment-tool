@@ -11,10 +11,37 @@ if [ -z "$APIGEE_PASSWORD" ]; then
     echo "" >&2
 fi
 
-# --- Get MFA code from user or environment variable ---
+# --- Handle MFA code based on MFA_REQUIRED setting ---
 if [ -z "$MFA_CODE" ]; then
-    read -p "Please enter your 6-digit MFA code: " -s MFA_CODE >&2
-    echo "" >&2 # Add a newline after the prompt
+    if [ -z "$MFA_REQUIRED" ]; then
+        # MFA_REQUIRED not set, prompt user and save their preference
+        read -p "Please enter your 6-digit MFA code (or press Enter if MFA is not required): " MFA_CODE >&2
+        echo "" >&2 # Add a newline after the prompt
+        
+        # Update .env file with MFA_REQUIRED setting
+        if [ -n "$MFA_CODE" ]; then
+            # User entered MFA code, set MFA_REQUIRED=true
+            if grep -q "MFA_REQUIRED" .env 2>/dev/null; then
+                sed -i 's/MFA_REQUIRED=.*/MFA_REQUIRED=true/' .env
+            else
+                echo "MFA_REQUIRED=true" >> .env
+            fi
+        else
+            # User pressed Enter, set MFA_REQUIRED=false
+            if grep -q "MFA_REQUIRED" .env 2>/dev/null; then
+                sed -i 's/MFA_REQUIRED=.*/MFA_REQUIRED=false/' .env
+            else
+                echo "MFA_REQUIRED=false" >> .env
+            fi
+        fi
+    elif [ "$MFA_REQUIRED" = "true" ]; then
+        # MFA is required, prompt for code
+        read -p "Please enter your 6-digit MFA code: " -s MFA_CODE >&2
+        echo "" >&2 # Add a newline after the prompt
+    else
+        # MFA not required, set empty code
+        MFA_CODE=""
+    fi
 fi
 
 # --- Generate the token using curl and parse it ---

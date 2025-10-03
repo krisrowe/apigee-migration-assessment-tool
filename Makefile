@@ -76,11 +76,12 @@ command:
 	@echo "----------------------------------------------------------------------"
 	@echo ""
 
-# Builds the image and runs the tool. Requires SOURCE_AUTH_TOKEN to be set.
+# Builds the image and runs the tool. Automatically generates token if SOURCE_AUTH_TOKEN is not set.
 run: build
 	@if [ -z "$$SOURCE_AUTH_TOKEN" ]; then \
-		echo "Error: SOURCE_AUTH_TOKEN is not set. Please run 'export SOURCE_AUTH_TOKEN=$(make token)' first."; \
-		exit 1; \
+		echo "SOURCE_AUTH_TOKEN not set. Generating token automatically..."; \
+		SOURCE_AUTH_TOKEN=$$(make token); \
+		export SOURCE_AUTH_TOKEN; \
 	fi
 	@echo "--- Running assessment tool ---"
 	@docker run --rm \
