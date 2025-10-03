@@ -35,9 +35,19 @@ if [ -z "$MFA_CODE" ]; then
             fi
         fi
     elif [ "$MFA_REQUIRED" = "true" ]; then
-        # MFA is required, prompt for code
-        read -p "Please enter your 6-digit MFA code: " -s MFA_CODE >&2
-        echo "" >&2 # Add a newline after the prompt
+        # MFA is required, but we're in non-interactive mode
+        # Check if we're running in a non-interactive environment
+        if [ -t 0 ]; then
+            # Interactive mode - prompt for code
+            read -p "Please enter your 6-digit MFA code: " -s MFA_CODE >&2
+            echo "" >&2 # Add a newline after the prompt
+        else
+            # Non-interactive mode - MFA_CODE should be provided via environment
+            if [ -z "$MFA_CODE" ]; then
+                echo "Error: MFA is required but MFA_CODE is not set. Please provide MFA_CODE environment variable." >&2
+                exit 1
+            fi
+        fi
     else
         # MFA not required, set empty code
         MFA_CODE=""

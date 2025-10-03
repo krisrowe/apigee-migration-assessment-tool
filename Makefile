@@ -84,6 +84,8 @@ run: build
 		export SOURCE_AUTH_TOKEN; \
 	fi
 	@echo "--- Running assessment tool ---"
+	@sudo rm -rf output 2>/dev/null || rm -rf output
+	@mkdir -p output
 	@docker run --rm \
 		-v "$(pwd)/output:/app/target" \
 		-v "$(pwd)/input.properties:/app/input.properties" \
