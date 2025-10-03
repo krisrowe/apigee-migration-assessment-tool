@@ -98,10 +98,42 @@ run:
 	else \
 		echo "Image $(IMAGE_TAG) already exists. Skipping build."; \
 	fi
-	@echo "--- Running assessment tool ---"
-	@sudo rm -rf output 2>/dev/null || rm -rf output
+	@echo "--- Checking output directory ---"
+	@if [ -d "output" ] && [ "$$(ls -A output 2>/dev/null)" ]; then \
+		echo ""; \
+		echo "⚠️  WARNING: Output directory contains files from previous runs!"; \
+		echo ""; \
+		echo "To avoid mixing old and new results, please choose one:"; \
+		echo "  1. Clean run:  make clean-run"; \
+		echo "  2. Keep existing:  make run-force"; \
+		echo "  3. Manual cleanup:  rm -rf output && make run"; \
+		echo ""; \
+		echo "Current output contents:"; \
+		ls -la output/ | head -10; \
+		echo ""; \
+		exit 1; \
+	fi
 	@mkdir -p output
 	@docker run --rm \
+		--user $(shell id -u):$(shell id -g) \
+		-v "$(pwd)/output:/app/target" \
+		-v "$(pwd)/input.properties:/app/input.properties" \
+		-e SOURCE_AUTH_TOKEN="$$SOURCE_AUTH_TOKEN" \
+		"$(IMAGE_TAG)" --resources all --skip-target-validation
+
+# Runs the assessment with automatic cleanup of output directory.
+clean-run:
+	@echo "--- Running assessment with clean output directory ---"
+	@rm -rf output
+	@mkdir -p output
+	@$(MAKE) run-force
+
+# Runs the assessment without checking for existing output (force mode).
+run-force:
+	@echo "--- Running assessment tool (force mode) ---"
+	@mkdir -p output
+	@docker run --rm \
+		--user $(shell id -u):$(shell id -g) \
 		-v "$(pwd)/output:/app/target" \
 		-v "$(pwd)/input.properties:/app/input.properties" \
 		-e SOURCE_AUTH_TOKEN="$$SOURCE_AUTH_TOKEN" \
@@ -137,6 +169,8 @@ help:
 	@echo "  make test TESTS=tests/test_scripts.py - Runs tests only for a specific module."
 	@echo ""
 	@echo "Other Commands:"
+	@echo "  make clean-run  - Runs assessment with automatic output cleanup."
+	@echo "  make run-force  - Runs assessment without checking for existing output."
 	@echo "  make clean      - Resets the workspace to a fresh-clone state."
 	@echo ""
 	@echo "Prerequisites:"
