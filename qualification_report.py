@@ -414,9 +414,9 @@ class QualificationReport():  # noqa pylint: disable=R0902,R0904
                 col += 1
                 anti_patterns_sheet.write(row, col, policy)
                 col += 1
-                anti_patterns_sheet.write(row, col, value['distributed'])
+                anti_patterns_sheet.write(row, col, value.get('distributed', 'default_false'))   # noqa pylint: disable=C0301
                 col += 1
-                anti_patterns_sheet.write(row, col, value['Synchronous'])
+                anti_patterns_sheet.write(row, col, value.get('Synchronous', 'default_false'))   # noqa pylint: disable=C0301
 
                 row += 1
 
