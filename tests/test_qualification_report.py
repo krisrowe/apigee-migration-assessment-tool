@@ -242,8 +242,8 @@ class TestQualificationReport(unittest.TestCase):
                 'qualification': {
                     'AntiPatternQuota': {
                         'policy1': {
-                            'distributed': True,
-                            'Synchronous': False
+                            'distributed': 'true',
+                            'Synchronous': 'false'
                         }
                     }
                 }
@@ -265,8 +265,8 @@ class TestQualificationReport(unittest.TestCase):
         mock_sheet.write.assert_any_call(1, 0, 'test_org')
         mock_sheet.write.assert_any_call(1, 1, 'proxy1')
         mock_sheet.write.assert_any_call(1, 2, 'policy1')
-        mock_sheet.write.assert_any_call(1, 3, True)
-        mock_sheet.write.assert_any_call(1, 4, False)
+        mock_sheet.write.assert_any_call(1, 3, 'true')
+        mock_sheet.write.assert_any_call(1, 4, 'false')
 
     @patch('qualification_report.cache_without_expiry_mapping')
     def test_report_cache_without_expiry(self, mock_mapping):
