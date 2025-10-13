@@ -22,8 +22,8 @@ Generates Apigee Edge SAAS Access Token
 
 import os
 import sys
-import requests
-import pyotp
+import requests  # pylint: disable=E0401
+import pyotp  # pylint: disable=E0401
 
 
 def fetch_apigee_token():
