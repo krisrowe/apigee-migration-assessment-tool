@@ -134,15 +134,31 @@ jobs:
           service_account: ${{ secrets.SVC_ACCOUNT_EMAIL }}
           export_environment_variables: false
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests pyotp
+
+      - name: Generate Apigee Token
+        id: get_token # This ID is important!
+        env:
+          APIGEE_EDGE_USER: ${{ secrets.APIGEE_EDGE_USER }}
+          APIGEE_EDGE_PASSWORD: ${{ secrets.APIGEE_EDGE_PASSWORD }}
+          OTP_SECRET: ${{ secrets.APIGEE_EDGE_OTP_SECRET }}
+        run: python tests/ci/generate_apigee_edge_access_token.py
+
       - name: Fetch input.properties
         run: |
-            echo "${{ secrets.OPDK_INPUT_PROPERTIES }}" | base64 -d > "${{ github.workspace }}/input.properties"
+            echo "${{ secrets.APIGEE_EDGE_INPUT_PROPERTIES }}" | base64 -d > "${{ github.workspace }}/input.properties"
 
-      - name: Run Docker container
+      - name: Run tests on Apigee Edge SAAS.
         run: |
           docker run \
             -v "${{ github.workspace }}/input.properties:/app/input.properties" \
-            -e "SOURCE_AUTH_TOKEN=${{ secrets.APIGEE_OPDK_TOKEN }}" \
+            -e "SOURCE_AUTH_TOKEN=${{ steps.get_token.outputs.access_token }}" \
             -e "APIGEE_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" \
             "${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
             --resources all
