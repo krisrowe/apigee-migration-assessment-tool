@@ -177,5 +177,4 @@ help:
 	@echo "  - Docker installed and user added to docker group"
 	@echo "  - If 'make build' fails with permission denied, run:"
 	@echo "    sudo usermod -aG docker \$$USER && newgrp docker"
-	@echo ""aG docker \$$USER && newgrp docker"
 	@echo ""
